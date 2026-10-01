@@ -1,0 +1,97 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local LocalPlayer = game.Players.LocalPlayer
+local CookingNew = require(LocalPlayer.PlayerScripts.CookingNew)
+local SoundEffects = require(LocalPlayer.PlayerScripts.SoundEffects)
+local TweenModel = require(game.ReplicatedStorage.PartModules.TweenModel)
+local v2 = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local v3 = {}
+
+function v1.setModelState(v4, v5) -- line 11 | captures: TweenModel, v2
+    local MoveParts = v4.MoveParts
+    MoveParts.MoveModel.PrimaryPart = MoveParts.MoveModel.Connector
+    if v5 then
+        TweenModel(MoveParts.MoveModel, MoveParts.ConnectorOpen.CFrame, v2)
+    else
+        TweenModel(MoveParts.MoveModel, MoveParts.ConnectorClosed.CFrame, v2)
+    end
+end
+
+function v1.swing(v6) -- line 21 | captures: v1, v2
+    v1.setModelState(v6, true)
+    task.wait(v2.Time)
+    v1.setModelState(v6, false)
+end
+
+function v1.clear() -- line 27 | captures: v3
+    if v3 then
+        for v7, v8 in pairs(v3) do
+            v8:Destroy()
+        end
+    end
+    v3 = nil
+end
+
+function v1.event(v9, v10, v11, v12) -- line 36 | captures: v3, v1, CookingNew, SoundEffects
+    if v11 == "start" then
+        CookingNew.getModule("CookingUI").close()
+        local CookProgress = CookingNew.getModule("CookProgress")
+        local duration = v12.duration
+        v1.clear()
+        v3 = {}
+
+        local function v13() -- line 46 | captures: v9, v3, SoundEffects
+            if not v3 then
+                return
+            end
+            if v9:findFirstChild("FirePart") then
+                local v14 = game.ReplicatedStorage.Resources.NewCookingResources.ParticleEmitters.Oven_Fire:Clone()
+                v14.Parent = v9.FirePart
+                v14.Enabled = true
+                local v15 = v3
+                local v16 = #v3 + 1
+                table.insert(v15, v16, v14)
+            end
+            if v9:findFirstChild("SmokePart") then
+                local v17 = game.ReplicatedStorage.Resources.NewCookingResources.ParticleEmitters.Oven_Smoke:Clone()
+                v17.Parent = v9.SmokePart
+                v17.Enabled = true
+                local v18 = v3
+                local v19 = #v3 + 1
+                table.insert(v18, v19, v17)
+            end
+            local v20 = SoundEffects.Play("Fire", v9.Base, true)
+            local v21 = v3
+            local v22 = #v3 + 1
+            table.insert(v21, v22, v20)
+        end
+
+        local function v23() -- line 66 | captures: v9, v10, v3, v1, CookingNew, SoundEffects
+            SoundEffects.Play("Ding")
+            local v24 = CookingNew.getModule("ProximityPrompts").get(v9, v10)
+            v24.ActionText = "Take out"
+            v24.Triggered:connect(function() -- line 70 | captures: v24, v9, v10, v1, CookingNew, SoundEffects
+                SoundEffects.Play("Click")
+                v24:Destroy()
+                CookingNew.completeTask(v9, v10)
+                v1.clear()
+            end)
+            local v25 = v3
+            local v26 = #v3 + 1
+            table.insert(v25, v26, v24)
+        end
+
+        SoundEffects.Play("SmallSwipe")
+        local v27 = SoundEffects.Play("Fridge", v9.Base, true, { fadeInDuration = 2 })
+        local v28 = v3
+        local v29 = #v3 + 1
+        table.insert(v28, v29, v27)
+        CookProgress.run(v9, v10, duration, v13, v23)
+    elseif v11 == "finish" then
+        v1.clear()
+        SoundEffects.Play("SmallSwipe")
+    end
+end
+
+return v1

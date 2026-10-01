@@ -1,0 +1,104 @@
+-- https://sitetest1.lua.expert
+
+local ContextActionService = game:GetService("ContextActionService")
+local Parent = require(script.Parent.Parent)
+local DeviceType = require(game.Players.LocalPlayer.PlayerScripts.Controls.DeviceType)
+local v1 = {}
+local v2 = game.Players.LocalPlayer:GetMouse()
+local v3 = false
+local v4 = false
+
+function v1.cancel() -- line 15 | captures: v3
+    v3 = true
+end
+
+function v1.start(v5, v6, v7, v8, v9, v10) -- line 19 | captures: v3, v4, ContextActionService, Parent, DeviceType, v2
+    local v11 = 0
+    local v12 = 0
+    local v13 = if v4 then 15 else 30
+    v3 = false
+    local v14 = DeviceType.get() == "Gamepad"
+    Parent.getModule("CookingCamera").lockToStation(Parent.getCurrentModel())
+    local v15 = "X"
+    local v16
+    if v5 and v5.direction then
+        local direction = v5.direction
+        v15 = direction
+        v16 = direction
+    else
+        v16 = "X"
+    end
+    local v17 = v2[v16]
+    local v18 = v13
+
+    local function loop() -- line 36 | captures: v11, v12, v15, v17, v6, v7, v10, v18, v14, v3, ContextActionService, Parent, v2
+        local v19 = v11
+        while true do
+            if v11 == v19 then
+                if v3 then
+                    v3 = false
+                    return
+                end
+                local v20
+                if not v14 then
+                    local v21 = v2[v15] - v17
+                    v20 = math.abs(v21) > 30
+                end
+                if v14 or v20 then
+                    v17 = v2[v15]
+                    v12 += 1
+                    local v22 = v12 / v18
+                    local v23 = math.clamp(v22, 0, 1)
+                    if v6 then
+                        v6(v23)
+                    end
+                    local v24 = v12
+                    if v18 <= v24 then
+                        break
+                    end
+                    if v10 then
+                        v10(1)
+                    end
+                elseif v10 then
+                    v10(0.1)
+                end
+                wait(0.1)
+                continue
+            end
+            return
+        end
+        v11 += 1
+        ContextActionService:UnbindAction("ClickToAddSauce")
+        if v7 then
+            Parent.getModule("CookingCamera").unlock()
+            v7()
+        end
+    end
+
+    if v5 and (v5.requiresMouseHold or v14) then
+        local function v25(v26, v27, v28) -- line 78 | captures: v11, v8, v9, loop
+            if v27 == Enum.UserInputState.Begin then
+                if v8 then
+                    v8()
+                end
+                v11 += 1
+                loop()
+            elseif v27 == Enum.UserInputState.End then
+                v11 += 1
+                if v9 then
+                    v9()
+                end
+            end
+        end
+
+        ContextActionService:BindAction("ClickToAddSauce", v25, false, Enum.UserInputType.MouseButton1, Enum.UserInputType.Touch, Enum.KeyCode.ButtonY)
+    else
+        loop()
+    end
+end
+
+function v1.setFasterCookingEnabled() -- line 98 | captures: v4
+    v4 = true
+end
+
+return v1

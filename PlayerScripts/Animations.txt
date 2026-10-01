@@ -1,0 +1,53 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local v2 = {}
+
+function v1.play(v3, v4, v5, v6, v7) -- line 5 | captures: v2
+    if v3 and v3.Parent then
+        if not v2[v3] then
+            v2[v3] = {}
+        end
+    else
+        return
+    end
+    local v8 = v2[v3][v4]
+    if v8 then
+        v8:Stop()
+        v8:Destroy()
+    end
+    if not (v3 and v3.Parent) then
+        return
+    end
+    if v3.Humanoid:IsDescendantOf(workspace) then
+        v2[v3][v4] = v3.Humanoid:LoadAnimation(game.ReplicatedStorage.Resources.Animations[v4])
+        if v7 then
+            v2[v3][v4].Looped = true
+        end
+    else
+        return
+    end
+    v2[v3][v4]:Play(v6 or 0, 1, v5 or 1)
+    return v2[v3][v4]
+end
+
+function v1.stop(v9, v10) -- line 31 | captures: v2
+    if v2[v9] then
+        local v11 = v2[v9][v10]
+        if v11 then
+            v11:Stop(0.1)
+        end
+    end
+end
+
+function v1.stopAll(v12) -- line 40 | captures: v2
+    if v2[v12] then
+        for v13, v14 in pairs(v2[v12]) do
+            v14:Stop()
+            v14:Destroy()
+        end
+        v2[v12] = nil
+    end
+end
+
+return v1

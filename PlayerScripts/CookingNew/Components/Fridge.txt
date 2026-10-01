@@ -1,0 +1,57 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local LocalPlayer = game.Players.LocalPlayer
+local CookingNew = require(LocalPlayer.PlayerScripts.CookingNew)
+local SoundEffects = require(LocalPlayer.PlayerScripts.SoundEffects)
+local TweenModel = require(game.ReplicatedStorage.PartModules.TweenModel)
+local v2 = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+function v1.setModelState(v3, v4) -- line 9 | captures: TweenModel, v2
+    local MoveParts = v3.MoveParts
+    MoveParts.Rotator1.Inner.PrimaryPart = MoveParts.Rotator1.Inner.Axis
+    MoveParts.Rotator2.Inner.PrimaryPart = MoveParts.Rotator2.Inner.Axis
+    if v4 then
+        TweenModel(MoveParts.Rotator1.Inner, MoveParts.Rotator1.ConnectorOpen.CFrame, v2)
+        TweenModel(MoveParts.Rotator2.Inner, MoveParts.Rotator2.ConnectorOpen.CFrame, v2)
+    else
+        TweenModel(MoveParts.Rotator1.Inner, MoveParts.Rotator1.ConnectorClosed.CFrame, v2)
+        TweenModel(MoveParts.Rotator2.Inner, MoveParts.Rotator2.ConnectorClosed.CFrame, v2)
+    end
+end
+
+function v1.swing(v5) -- line 22 | captures: v1, v2
+    v1.setModelState(v5, true)
+    task.wait(v2.Time * 2)
+    v1.setModelState(v5, false)
+end
+
+function v1.event(v6, v7, v8, v9) -- line 28 | captures: CookingNew, SoundEffects
+    if v8 == "start" then
+        if not v9.duration or v9.duration == 0 then
+            CookingNew.completeTask(v6, v7)
+        else
+            CookingNew.getModule("CookingUI").close()
+            local CookProgress = CookingNew.getModule("CookProgress")
+            local duration = v9.duration
+
+            local function v10() -- line 36 | captures: v6, v7, CookingNew, SoundEffects
+                SoundEffects.Play("Ding")
+                local v11 = CookingNew.getModule("ProximityPrompts").get(v6, v7)
+                v11.ActionText = "Take out"
+                v11.Triggered:connect(function() -- line 40 | captures: v11, v6, v7, CookingNew, SoundEffects
+                    SoundEffects.Play("Click")
+                    v11:Destroy()
+                    CookingNew.completeTask(v6, v7)
+                end)
+            end
+
+            SoundEffects.Play("SmallSwipe")
+            CookProgress.run(v6, v7, duration, nil, v10).StudsOffsetWorldSpace = Vector3.new(0, 9, 0)
+        end
+    elseif v8 == "finish" then
+        SoundEffects.Play("SmallSwipe")
+    end
+end
+
+return v1

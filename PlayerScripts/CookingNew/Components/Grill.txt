@@ -1,0 +1,15 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local LocalPlayer = game.Players.LocalPlayer
+local CookingNew = require(LocalPlayer.PlayerScripts.CookingNew)
+
+function v1.event(v2, v3, v4, v5, ...) -- line 6 | captures: CookingNew
+    if v2.Name == "Tandoor" then
+        CookingNew.getModule("PizzaOven").event(v2, v3, v4, v5, ...)
+    else
+        CookingNew.getModule("Stove").event(v2, v3, v4, v5, ...)
+    end
+end
+
+return v1

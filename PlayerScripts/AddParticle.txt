@@ -1,0 +1,18 @@
+-- https://sitetest1.lua.expert
+
+return {
+    add = function(v1, v2) -- line 3
+        local ParticleEmitters = game.ReplicatedStorage.Resources.NewCookingResources.ParticleEmitters
+        if v2 and ParticleEmitters:findFirstChild(v1) then
+            if v2:findFirstChild(v1) then
+                v2[v1]:Destroy()
+            end
+        else
+            return nil
+        end
+        local v3 = ParticleEmitters[v1]:Clone()
+        v3.Parent = v2
+        v3.Enabled = true
+        return v3
+    end
+}

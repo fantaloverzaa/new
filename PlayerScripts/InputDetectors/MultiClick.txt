@@ -1,0 +1,70 @@
+-- https://sitetest1.lua.expert
+
+local ContextActionService = game:GetService("ContextActionService")
+local v1 = {}
+local v2 = false
+local v3 = false
+
+function v1.cancel() -- line 8 | captures: v3
+    v3 = true
+end
+
+function v1.start(v4, v5, v6) -- line 12 | captures: v2, v3, ContextActionService
+    v3 = false
+    local v7 = 0
+    local v8 = false
+    local v9 = false
+    local v10, v11
+    if not (v4 and v4.clicks) then
+        v10 = 10
+        v11 = 10
+    else
+        local clicks = v4.clicks
+        v10 = clicks
+        v11 = clicks
+    end
+    if v2 then
+        v10 = v11 / 2
+    end
+
+    local function v12(v13, v14, v15) -- line 29 | captures: v7, v8, v9, v10, v5, v6, v3, ContextActionService
+        if v3 then
+            v3 = false
+            ContextActionService:UnbindAction("ClickToChop")
+            v8 = false
+        elseif v14 == Enum.UserInputState.Begin then
+            spawn(function() -- line 41 | captures: v7, v8, v9, v10, v5, v6, ContextActionService
+                if v8 or v9 then
+                    return
+                end
+                v8 = true
+                v7 += 1
+                if v5 then
+                    local v16 = v7 / v10
+                    v5((math.clamp(v16, 0, 1)))
+                end
+                wait(0.1)
+                local v17 = v7
+                if v10 <= v17 then
+                    ContextActionService:UnbindAction("ClickToChop")
+                    v8 = false
+                    if v6 and not v9 then
+                        v9 = true
+                        v6()
+                    end
+                else
+                    v8 = false
+                end
+            end)
+            return Enum.ContextActionResult.Pass
+        end
+    end
+
+    ContextActionService:BindAction("ClickToChop", v12, false, Enum.UserInputType.MouseButton1, Enum.UserInputType.Touch, Enum.KeyCode.ButtonR2)
+end
+
+function v1.setFasterCookingEnabled() -- line 69 | captures: v2
+    v2 = true
+end
+
+return v1

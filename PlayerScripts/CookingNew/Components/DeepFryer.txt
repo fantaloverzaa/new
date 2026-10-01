@@ -1,0 +1,40 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local LocalPlayer = game.Players.LocalPlayer
+local CookingNew = require(LocalPlayer.PlayerScripts.CookingNew)
+local SoundEffects = require(LocalPlayer.PlayerScripts.SoundEffects)
+local v2 = false
+
+function v1.setUpProx(v3) -- line 8 | captures: v2
+    if v2 then
+        v3.HoldDuration = 2
+    else
+        v3.HoldDuration = 4
+    end
+    return true
+end
+
+function v1.setFasterCookingEnabled() -- line 13 | captures: v2
+    v2 = true
+end
+
+function v1.event(v4, v5, v6, v7) -- line 17 | captures: LocalPlayer, CookingNew, SoundEffects
+    if v6 == "start" then
+        local FryerValue = CookingNew.getResource(LocalPlayer, v4, "FryerValue")
+        if FryerValue then
+            local v8 = SoundEffects.Play("Sizzle", v4.Base, true)
+            local v9 = game.ReplicatedStorage.Resources.NewCookingResources.ParticleEmitters.DeepFry:Clone()
+            v9.Enabled = true
+            v9.Parent = FryerValue.Value.Particles
+            local v10
+            v10 = FryerValue.AncestryChanged:connect(function() -- line 26 | captures: v10, v8, v9
+                v8:Destroy()
+                v10:disconnect()
+                v9:Destroy()
+            end)
+        end
+    end
+end
+
+return v1

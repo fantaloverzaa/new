@@ -1,0 +1,28 @@
+-- https://sitetest1.lua.expert
+
+local TweenService = game:GetService("TweenService")
+local DeviceType = require(game.Players.LocalPlayer.PlayerScripts.Controls.DeviceType)
+local v1 = TweenInfo.new(0.25)
+local LocalPlayer = game.Players.LocalPlayer
+local CurrentCamera = workspace.CurrentCamera
+local v2 = {}
+
+function v2.lockToStation(v3) -- line 18 | captures: TweenService, DeviceType, v1, CurrentCamera
+    if DeviceType.get() ~= "Mobile" then
+        return
+    end
+    local v4 = v3.Base.CFrame * Vector3.new(-5, 6.599999904632568, 1.7999999523162842)
+    local v5 = v3.Base.CFrame * Vector3.new(0, 4, 0)
+    local v6 = CFrame.new(v4, v5)
+    CurrentCamera.CameraType = Enum.CameraType.Scriptable
+    TweenService:Create(CurrentCamera, v1, { CFrame = v6 }):Play()
+end
+
+function v2.unlock() -- line 39 | captures: LocalPlayer, CurrentCamera
+    CurrentCamera.CameraType = Enum.CameraType.Custom
+    if LocalPlayer.Character and LocalPlayer.Character:findFirstChild("Humanoid") then
+        CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+    end
+end
+
+return v2

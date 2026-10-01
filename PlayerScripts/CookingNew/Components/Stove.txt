@@ -1,0 +1,52 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local LocalPlayer = game.Players.LocalPlayer
+local CookingNew = require(LocalPlayer.PlayerScripts.CookingNew)
+local SoundEffects = require(LocalPlayer.PlayerScripts.SoundEffects)
+
+function v1.event(v2, v3, v4, v5) -- line 6 | captures: LocalPlayer, CookingNew, SoundEffects
+    if v4 ~= "start" then
+        return
+    end
+    CookingNew.getModule("CookingUI").close()
+    local CookProgress = CookingNew.getModule("CookProgress")
+    local duration = v5.duration
+    local method = v5.param.method
+    local v6 = CookingNew.getResource(LocalPlayer, v2, method)
+    if v6 then
+        v6:WaitForChild("Base", 1)
+    end
+
+    local function v7() -- line 19 | captures: method, v6, CookingNew, SoundEffects
+        if not (v6 and v6.Parent) then
+            return
+        end
+        CookingNew.getModule("AddParticle").add(method .. "_Fire", v6:findFirstChild("FirePart"))
+        CookingNew.getModule("AddParticle").add(method .. "_Smoke", v6:findFirstChild("SmokePart"))
+        SoundEffects.Play("Fire", v6.Base, true)
+    end
+
+    local function v8() -- line 28 | captures: v2, v3, CookingNew, SoundEffects
+        local v9 = CookingNew.getModule("ProximityPrompts").get(v2, v3)
+        v9.ActionText = "Finish"
+        v9.Triggered:connect(function() -- line 31 | captures: v9, v2, v3, CookingNew, SoundEffects
+            SoundEffects.Play("Click")
+            v9:Destroy()
+            CookingNew.completeTask(v2, v3)
+        end)
+    end
+
+    if v6 and v6:findFirstChild("Base") then
+        if method == "FryingPan" or method == "BlankSmokePart" then
+            SoundEffects.Play("Sizzle", v6.Base, true, { fadeInDuration = 3 })
+        elseif method == "SaucePan" then
+            CookingNew.getModule("AddParticle").add(method .. "_Smoke", v6:findFirstChild("SmokePart"))
+            CookingNew.getModule("AddParticle").add(method .. "_Bubbles", v6:findFirstChild("BubblesPart"))
+            SoundEffects.Play("Boil", v6.Base, true, { fadeInDuration = 3 })
+        end
+    end
+    CookProgress.run(v2, v3, duration, v7, v8)
+end
+
+return v1

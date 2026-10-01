@@ -1,0 +1,236 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local LocalPlayer = game.Players.LocalPlayer
+local v2 = require(LocalPlayer.PlayerScripts.Controls:WaitForChild("PlayerControls"))
+local CookingNew = require(LocalPlayer.PlayerScripts.CookingNew)
+local Instructions = require(game.ReplicatedStorage.DataModules.Food.Instructions)
+local SoundEffects = require(LocalPlayer.PlayerScripts.SoundEffects)
+local SetModelProperties = require(game.ReplicatedStorage.PartModules.SetModelProperties)
+local MultiClick = require(script.Parent.Parent.InputDetectors.MultiClick)
+local MouseMovement = require(script.Parent.Parent.InputDetectors.MouseMovement)
+local v3 = false
+
+function v1.setUpProx(v4, v5) -- line 13 | captures: v3, SoundEffects
+    local v6 = if v3 then 2 else 4
+    if not v5 or not v5.instruct or v5.instruct ~= "Blend" and v5.instruct ~= "Mince" then
+        return
+    end
+    v4.HoldDuration = v6
+    local v7
+    v4.PromptButtonHoldBegan:connect(function() -- line 20 | captures: v7, v4, SoundEffects
+        v7 = SoundEffects.Play("Blender", v4.Parent.Parent, false, { PlaybackSpeed = 1.2 })
+    end)
+    v4.PromptButtonHoldEnded:connect(function() -- line 23 | captures: v7
+        if v7 then
+            v7:Destroy()
+        end
+    end)
+    return true
+end
+
+function v1.setFasterCookingEnabled() -- line 32 | captures: v3
+    v3 = true
+end
+
+function v1.event(v8, v9, v10, v11) -- line 36 | captures: LocalPlayer, v2, CookingNew, Instructions, SoundEffects, SetModelProperties, MultiClick, MouseMovement
+    local function v12(...)
+        return (tostring(...))
+    end
+
+    if v11 and v11.param then
+        if v10 == "start" then
+            if v11.param.method == "ChoppingBoard" then
+                v2.disable()
+                CookingNew.getModule("CookingUI").setState({
+                    showProgress = true,
+                    resetProgress = true,
+                    instruction = Instructions.getInstruction("ClickRapidly")
+                })
+                CookingNew.getModule("Animations").play(LocalPlayer.Character, "ChopV3", 0, 0.1)
+
+                local function v13(v14) -- line 47 | captures: LocalPlayer, CookingNew, SoundEffects
+                    SoundEffects.Play("Knife")
+                    CookingNew.getModule("Animations").play(LocalPlayer.Character, "ChopV3", 1, 0.1)
+                    CookingNew.getModule("CookingUI").setState({ progress = v14 })
+                end
+
+                local function v15() -- line 52 | captures: v8, v9, CookingNew
+                    CookingNew.completeTask(v8, v9)
+                end
+
+                MultiClick.start({ clicks = 10 }, v13, v15)
+            elseif v11.param.method == "AddSauce" then
+                v2.disable()
+                CookingNew.getModule("CookingUI").setState({
+                    showProgress = true,
+                    resetProgress = true,
+                    instruction = Instructions.getInstruction("HoldMouseLR")
+                })
+                local v16 = CookingNew.getModule("Animations").play(LocalPlayer.Character, "AddSauceNEWDerpy", 1, 0.5)
+                local RedSauce = CookingNew.getResource(LocalPlayer, v8, "RedSauce")
+                local v17, v18, Volume
+                local v19 = 0.1
+                if v16 then
+                    v16:AdjustSpeed(0.1)
+                end
+                if RedSauce and RedSauce:WaitForChild("Cone", 0.5) and RedSauce.Cone:WaitForChild("Attachment", 0.5) then
+                    local v20 = RedSauce.Cone.Attachment:WaitForChild("ParticleEmitter", 0.5)
+                    v17 = v20
+                    if v20 then
+                        if v11.param.sauceColor then
+                            v20.Color = ColorSequence.new(v11.param.sauceColor)
+                        end
+                        if v11.param.bottleColor then
+                            local v21 = {}
+                            v21.Color = v11.param.bottleColor
+                            SetModelProperties(RedSauce, v21)
+                        end
+                        if v11.param.sauceTransparency then
+                            v20.Transparency = NumberSequence.new(v11.param.sauceTransparency)
+                        end
+                    end
+                    local v22 = SoundEffects.Play("Simmer", RedSauce.Cone, true)
+                    v18 = v22
+                    Volume = v22.Volume
+                    v22.Volume = 0
+                end
+
+                local function v23() -- line 90 | captures: v17, v18, Volume, CookingNew, Instructions
+                    CookingNew.getModule("CookingUI").setState({ instruction = Instructions.getInstruction("SwipeLR") })
+                    if v17 then
+                        v17.Enabled = true
+                    end
+                    if v18 then
+                        v18.Volume = Volume
+                    end
+                end
+
+                local function v24() -- line 99 | captures: v17, v18, CookingNew, Instructions
+                    CookingNew.getModule("CookingUI").setState({ instruction = Instructions.getInstruction("HoldMouseLR") })
+                    if v17 then
+                        v17.Enabled = false
+                    end
+                    if v18 then
+                        v18.Volume = 0
+                    end
+                end
+
+                local function v25(v26) -- line 108 | captures: v8, v11, LocalPlayer, CookingNew
+                    if v11.param.hideFoodContents then
+                        local FoodModel = CookingNew.getResource(LocalPlayer, v8, "FoodModel")
+                        if FoodModel and FoodModel:findFirstChild("Contents") then
+                            local v27 = FoodModel.Contents:findFirstChild(v11.param.hideFoodContents)
+                            if v27 then
+                                v27.Transparency = 1 - v26
+                            end
+                        end
+                    end
+                    CookingNew.getModule("CookingUI").setState({ progress = v26 })
+                end
+
+                local function v28() -- line 120 | captures: v8, v9, CookingNew
+                    CookingNew.completeTask(v8, v9)
+                end
+
+                local function v29(v30) -- line 123 | captures: v19, v16
+                    v19 = v19 * 0.8 + v30 * 0.2
+                    if v16 then
+                        v16:AdjustSpeed(v19)
+                    end
+                end
+
+                MouseMovement.start({
+                    direction = "X",
+                    requiresMouseHold = true
+                }, v25, v28, v23, v24, v29)
+            elseif v11.param.method ~= "Blend" then
+                if v11.param.method == "Mincer" then
+                    return
+                end
+                if v11.param.method ~= "Wrap" and v11.param.method ~= "SushiRoll" and v11.param.method ~= "Grate" then
+                    if v11.param.method == "Season" then
+                        v2.disable()
+                        local Shaker = CookingNew.getResource(LocalPlayer, v8, "Shaker")
+                        local v31 = CookingNew.getModule("Animations").play(LocalPlayer.Character, "SaltShakerNEW", 1, 0.1, true)
+                        CookingNew.getModule("CookingUI").setState({
+                            showProgress = true,
+                            resetProgress = true,
+                            instruction = Instructions.getInstruction("ClickRapidly")
+                        })
+
+                        local function v32(v33) -- line 173 | captures: Shaker, CookingNew
+                            if Shaker:FindFirstChild("PEP") then
+                                Shaker.PEP.ParticleEmitter:Emit(30)
+                            end
+                            CookingNew.getModule("CookingUI").setState({ progress = v33 })
+                        end
+
+                        local function v34() -- line 179 | captures: v31, v8, v9, LocalPlayer, CookingNew
+                            v31 = CookingNew.getModule("Animations").stop(LocalPlayer.Character, "SaltShakerNEW")
+                            CookingNew.completeTask(v8, v9)
+                        end
+
+                        MultiClick.start({ clicks = 10 }, v32, v34)
+                    end
+                else
+                    v2.disable()
+                    local v35 = if v11.param.method == "Grate" then "CheeseGrate" else "Wrap"
+                    local v36 = CookingNew.getModule("Animations").play(LocalPlayer.Character, v35, 0.5, 0.2, true)
+                    local v37 = 0.1
+                    local v38 = SoundEffects.Play("Mix" .. v12(math.random(1, 3)), v8.Base, true)
+                    local Volume = v38.Volume
+                    if v36 then
+                        v36:AdjustSpeed(0.1)
+                    end
+
+                    local function v39(v40) -- line 146 | captures: CookingNew
+                        CookingNew.getModule("CookingUI").setState({ progress = v40 })
+                    end
+
+                    local v41 = v35
+
+                    local function v42() -- line 149 | captures: v8, v9, v38, v41, LocalPlayer, CookingNew
+                        v38:Destroy()
+                        CookingNew.getModule("Animations").stop(LocalPlayer.Character, v41)
+                        CookingNew.completeTask(v8, v9)
+                    end
+
+                    local function v43(v44) -- line 154 | captures: v36, v38, Volume, v37
+                        v37 = v37 * 0.8 + v44 * 0.2
+                        v38.Volume = Volume * v37
+                        if v36 then
+                            v36:AdjustSpeed(v37)
+                        end
+                    end
+
+                    CookingNew.getModule("CookingUI").setState({
+                        showProgress = true,
+                        resetProgress = true,
+                        instruction = Instructions.getInstruction("SwipeUD")
+                    })
+                    MouseMovement.start({
+                        direction = "Y",
+                        requiresMouseHold = false
+                    }, v39, v42, nil, nil, v43)
+                end
+            end
+        elseif v10 == "finish" then
+            if v11.param.method == "ChoppingBoard" then
+                CookingNew.getModule("Animations").stop(LocalPlayer.Character, "ChopV3")
+                v2.enable()
+            elseif v11.param.method == "AddSauce" then
+                CookingNew.getModule("Animations").stop(LocalPlayer.Character, "AddSauceNEWDerpy")
+                v2.enable()
+            elseif v11.param.method ~= "Wrap" and v11.param.method ~= "SushiRoll" and v11.param.method ~= "Grate" then
+                if v11.param.method == "Season" then
+                    v2.enable()
+                end
+            else
+                v2.enable()
+            end
+        end
+    end
+end
+
+return v1

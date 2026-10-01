@@ -1,0 +1,23 @@
+-- https://sitetest1.lua.expert
+
+return {
+    setUpProx = function(v1, v2, v3) -- setUpProx | line 5
+        v1.HoldDuration = 3
+        local Base = v3:FindFirstChild("Base")
+
+        local function set(v4) -- line 10 | captures: Base
+            if Base and Base:FindFirstChild("Attachment") and Base.Attachment:FindFirstChild("ProximityPrompt") then
+                Base.Attachment.ProximityPrompt.Enabled = v4
+            end
+        end
+
+        if Base and Base:FindFirstChild("Attachment") and Base.Attachment:FindFirstChild("ProximityPrompt") then
+            Base.Attachment.ProximityPrompt.Enabled = false
+        end
+        v1.Triggered:Connect(function() -- line 17 | captures: Base
+            if Base and Base:FindFirstChild("Attachment") and Base.Attachment:FindFirstChild("ProximityPrompt") then
+                Base.Attachment.ProximityPrompt.Enabled = true
+            end
+        end)
+    end
+}

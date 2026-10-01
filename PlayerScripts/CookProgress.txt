@@ -1,0 +1,93 @@
+-- https://sitetest1.lua.expert
+
+local TweenService = game:GetService("TweenService")
+local Notifications = require(game.ReplicatedStorage.GuiModules.Notifications)
+local LocalPlayer = game.Players.LocalPlayer
+local v1 = {}
+local v2 = false
+local v3 = Color3.fromRGB(79, 209, 110)
+local v4 = Color3.fromRGB(14, 222, 241)
+local v5 = {
+    cancel = function() -- line 15 | captures: v1
+        for v6 in pairs(v1) do
+            v6:Cancel()
+            v1[v6] = nil
+        end
+        v1 = {}
+    end
+}
+
+function v5.createProgressUI(v7, v8) -- line 23 | captures: v2, TweenService, LocalPlayer, v3, v4
+    local v9 = game.ReplicatedStorage.Resources.NewCookingResources.Guis.ProgressGui:Clone()
+    if v7:FindFirstChild("CookingResources") then
+        v9.Parent = v7.CookingResources:WaitForChild(LocalPlayer.Name)
+    else
+        v9.Parent = v7
+    end
+    v9.ProgressBar.BoostLabel.Visible = v2
+    v9.ProgressBar.InnerBar.ImageColor3 = v2 and v4 or v3
+    v9.Adornee = v7.Base
+    v9.ProgressBar.InnerBar.Size = UDim2.new(0, 0, 1, 0)
+    v9.Enabled = true
+    local v10 = TweenInfo.new(v8, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+    local v11 = TweenService:Create(v9.ProgressBar.InnerBar, v10, { Size = UDim2.new(1, 0, 1, 0) })
+    v11:Play()
+    return v9, v11
+end
+
+function v5.run(v12, v13, v14, v15, v16) -- line 48 | captures: v1, v2, TweenService, Notifications, v5
+    local v17 = v14
+    local v18
+    if v2 then
+        v18 = v14 / 2
+        v17 = v18
+    else
+        v18 = v14
+    end
+    local v19, v20 = v5.createProgressUI(v12, v18)
+    v1[v20] = true
+
+    local function burnSequence() -- line 58 | captures: v17, v15, v19, v1, TweenService, Notifications
+        local v21 = TweenService:Create(v19.ProgressBar.InnerBar, TweenInfo.new(5), {})
+        v1[v21] = true
+        v21:Play()
+        v21.Completed:connect(function(v22) -- line 62 | captures: v21, v17, v15, v19, v1, TweenService, Notifications
+            if not v1[v21] then
+                return
+            end
+            v1[v21] = nil
+            v21:Destroy()
+            if not (v22 == Enum.PlaybackState.Completed and v19 and v19.Parent) then
+                return
+            end
+            local v23 = TweenInfo.new(v17, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+            TweenService:Create(v19.ProgressBar.InnerBar, v23, { ImageColor3 = Color3.fromRGB(209, 0, 0) }):Play()
+            v15()
+            Notifications.add("Your food is burning!")
+        end)
+    end
+
+    v20.Completed:connect(function(v24) -- line 82 | captures: v15, v16, v20, burnSequence, v1
+        if not v1[v20] then
+            return
+        end
+        v1[v20] = nil
+        v20:Destroy()
+        if v24 == Enum.PlaybackState.Completed then
+            v16()
+            if v15 then
+                burnSequence()
+            end
+        end
+    end)
+    v19.Parent.Destroying:Connect(function() -- line 97 | captures: v19
+        v19:Destroy()
+    end)
+    return v19
+end
+
+function v5.setFasterCookingEnabled() -- line 104 | captures: v2
+    v2 = true
+end
+
+return v5

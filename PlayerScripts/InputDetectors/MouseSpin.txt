@@ -1,0 +1,86 @@
+-- https://sitetest1.lua.expert
+
+local Parent = require(script.Parent.Parent)
+local CheckSpin = require(game.Players.LocalPlayer.PlayerScripts.Controls.InputDetectors.CheckSpin)
+local CheckSpinGamepad = require(game.Players.LocalPlayer.PlayerScripts.Controls.InputDetectors.CheckSpinGamepad)
+local DeviceType = require(game.Players.LocalPlayer.PlayerScripts.Controls.DeviceType)
+local v1 = false
+local v2 = false
+local v3 = {
+    cancel = function() -- line 13 | captures: v1
+        v1 = true
+    end
+}
+
+function v3.start(v4, v5, v6, v7) -- line 18 | captures: v1, v2, Parent, CheckSpin, CheckSpinGamepad, DeviceType
+    v1 = false
+    local v8
+    if DeviceType.get() == "Gamepad" then
+        CheckSpinGamepad.startChecking()
+        v8 = 30
+    else
+        v8 = 80
+    end
+    if v2 then
+        v8 /= 2
+    end
+    Parent.getModule("CookingCamera").lockToStation(Parent.getCurrentModel())
+    local v9 = 0
+    while true do
+        if wait() then
+            if v1 then
+                v1 = false
+                return
+            end
+            local v10
+            if DeviceType.get() == "Gamepad" then
+                v10 = CheckSpinGamepad.check()
+            else
+                v10 = CheckSpin.check()
+            end
+            local v11, v12, v13
+            if v10 then
+                local v14 = v9 + 1
+                local v15 = v14 / v8
+                local v16 = math.clamp(v15, 0, 1)
+                if v5 then
+                    v5(v16)
+                end
+                if v8 <= v14 then
+                    v13 = true
+                else
+                    v12 = v14
+                    v11 = 1
+                    v13 = false
+                end
+            else
+                v12 = v9
+                v11 = 0.1
+                v13 = false
+            end
+            if v13 then
+                break
+            end
+            if v7 then
+                v7(v11)
+            end
+            v9 = v12
+            continue
+        end
+        return
+    end
+    if not v6 then
+        return
+    end
+    Parent.getModule("CookingCamera").unlock()
+    CheckSpin.reset()
+    CheckSpinGamepad.reset()
+    CheckSpinGamepad.finishChecking()
+    v6()
+end
+
+function v3.setFasterCookingEnabled() -- line 73 | captures: v2
+    v2 = true
+end
+
+return v3

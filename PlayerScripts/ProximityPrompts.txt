@@ -1,0 +1,30 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {
+    createProximityPrompt = function(v2) -- createProximityPrompt | line 3
+        local ProximityPrompt = Instance.new("ProximityPrompt")
+        ProximityPrompt.Name = "Cook_" .. v2
+        ProximityPrompt.Enabled = true
+        ProximityPrompt.RequiresLineOfSight = false
+        return ProximityPrompt
+    end
+}
+
+function v1.get(v3, v4) -- line 11 | captures: v1
+    local Base = v3:FindFirstChild("Base")
+    if Base and Base:FindFirstChild("Attachment") and Base.Attachment:FindFirstChildOfClass("ProximityPrompt") then
+        return Base:FindFirstChildOfClass("ProximityPrompt")
+    end
+    local v5 = v1.createProximityPrompt(v4)
+    task.spawn(function() -- line 22 | captures: v3, Base, v5
+        if v3:WaitForChild("Base", 1) then
+            local v6 = Base:WaitForChild("Attachment", 1)
+            if v6 then
+                v5.Parent = v6
+            end
+        end
+    end)
+    return v5
+end
+
+return v1

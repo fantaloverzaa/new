@@ -1,0 +1,265 @@
+-- Script Path: game:GetService("Players").BrackiRiper.PlayerScripts.CookingNew
+-- Took 0.4s to decompile.
+-- Executor: Xeno (v1.3.60)
+
+-- https://sitetest1.lua.expert
+
+local v1
+local Waypoints = require(game.Players.LocalPlayer.PlayerScripts.Waypoints)
+local SoundEffects = require(game.Players.LocalPlayer.PlayerScripts.SoundEffects)
+local DisableAll = require(game.ReplicatedStorage.GuiModules.DisableAll)
+local v2 = require(game.Players.LocalPlayer.PlayerScripts.Controls:WaitForChild("PlayerControls"))
+local v3, v4
+local LocalPlayer = game.Players.LocalPlayer
+local v5
+local v6 = {}
+local v7 = {
+    LocalPlayer.PlayerGui.CookingGui,
+    LocalPlayer.PlayerGui.Utilities,
+    LocalPlayer.PlayerGui.Notifications
+}
+local v8, v9, v10, v11, v12
+local v13 = false
+local v14 = {
+    isCooking = false,
+    getResourceFolder = function(v15, v16) -- line 29
+        if v16 then
+            local v17 = v16:WaitForChild("CookingResources", 1)
+            if v17 then
+                return (v17:WaitForChild(v15, 1))
+            end
+        end
+        return nil
+    end
+}
+
+function v14.getResource(v18, v19, v20) -- line 41 | captures: LocalPlayer
+    if v19 then
+        local v21 = v19:WaitForChild("CookingResources", 1)
+        if v21 then
+            local v22 = v21:WaitForChild(LocalPlayer.Name, 1)
+            if v22 then
+                local v23 = v22:WaitForChild(v20, 1)
+                if v23 then
+                    return v23
+                end
+            end
+        end
+    end
+    return nil
+end
+
+function v14.getAttachment(v24) -- line 58
+    local Base = v24:findFirstChild("Base")
+    local Attachment
+    if Base then
+        Attachment = Base:findFirstChild("Attachment")
+    end
+    if not Base or not Attachment then
+        return
+    end
+    return Attachment
+end
+
+function v14.setProximityPromptEnabled(v25, v26) -- line 68 | captures: v14
+    local v27 = v14.getAttachment(v25)
+    if v27 then
+        local ProximityPrompt = v27:findFirstChildOfClass("ProximityPrompt")
+        if ProximityPrompt then
+            ProximityPrompt.Enabled = v26
+        end
+    end
+end
+
+function v14.getModule(v28) -- line 78 | captures: v6
+    return v6[v28]
+end
+
+function v14.activate(v29, v30, v31) -- line 83 | captures: SoundEffects, v14
+    local v32 = v14.getModule("ProximityPrompts").get(v29, v30)
+    v32.Enabled = true
+    if v31 and v31.instruct then
+        v32.ActionText = v31.instruct
+    end
+    if v30 then
+        local v33 = v14.getModule(v30)
+        if v33 and v33.setUpProx then
+            v33.setUpProx(v32, v31, v29)
+        end
+    end
+    if v32.HoldDuration == 0 then
+        v32.Triggered:connect(function() -- line 97 | captures: v29, v30, v32, SoundEffects
+            SoundEffects.Play("Click")
+            game.ReplicatedStorage.Events.NewCookingRemote:FireServer("interact", v29, v30)
+            task.defer(function() -- line 100 | captures: v32
+                v32:Destroy()
+            end)
+        end)
+    else
+        local v34 = false
+        v32.PromptButtonHoldBegan:connect(function() -- line 107 | captures: v34, v29, v30
+            if not v34 then
+                v34 = true
+                game.ReplicatedStorage.Events.NewCookingRemote:FireServer("interact", v29, v30)
+            end
+        end)
+        v32.Triggered:connect(function() -- line 113 | captures: v29, v30, v32, SoundEffects, v14
+            SoundEffects.Play("Click")
+            v14.completeTask(v29, v30)
+            task.defer(function() -- line 116 | captures: v32
+                v32:Destroy()
+            end)
+        end)
+    end
+end
+
+function v14.completeTask(v35, v36) -- line 124 | captures: v5
+    if v5 then
+        v5:disconnect()
+    end
+    game.ReplicatedStorage.Events.NewCookingRemote:FireServer("completeTask", v35, v36)
+end
+
+function v14.getCurrentModel() -- line 131 | captures: v8
+    return v8
+end
+
+function v14.getCurrentFoodId() -- line 135 | captures: v9
+    return v9
+end
+
+function v14.getCurrentCookingMode() -- line 139 | captures: v10
+    return v10
+end
+
+function v14.showRegularUI(v37) -- line 143 | captures: DisableAll, v7
+    if v37 then
+        DisableAll.enableAll(v7, true)
+    else
+        DisableAll.disableAll(v7, true)
+    end
+end
+
+function v14.handleRequest(v38, v39, v40, v41, ...) -- line 151 | captures: v1, v3, v4, v5, v8, v9, v10, v11, v12, Waypoints, v2, LocalPlayer, v14
+    if v38 == "interact" then
+        if v41 == "start" then
+            Waypoints.destroy(v40)
+            if LocalPlayer.Character and LocalPlayer.Character:findFirstChild("Humanoid") and not v3.isPlaying() then
+                v5 = LocalPlayer.Character.Humanoid.Died:connect(function() -- line 160 | captures: LocalPlayer
+                    local CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame
+                    LocalPlayer.CharacterAdded:wait()
+                    LocalPlayer.Character:WaitForChild("HumanoidRootPart").CFrame = CFrame
+                end)
+            end
+            v8 = v39
+        end
+        local v42 = v14.getModule(v40)
+        if v42 and v42.event then
+            v42.event(v39, v40, v41, ...)
+        end
+    elseif v38 == "start" then
+        v9 = nil
+        v10 = nil
+        v14.isCooking = false
+        v14.getModule("CookProgress").cancel()
+        v14.getModule("Animations").stopAll(LocalPlayer.Character)
+        v2.enable()
+        if v11 then
+            Waypoints.destroy(v11)
+        end
+        v9 = v39
+        v10 = v40
+        v1.setup({ foodId = v39 })
+        v14.isCooking = true
+        v4.stop()
+    elseif v38 == "instruct" then
+        local v43 = ({ ... })[1]
+        local WorldPosition = v14.getAttachment(v39).WorldPosition
+        Waypoints.create(v40, WorldPosition, nil, nil, false)
+        v11 = v40
+        v12 = v39
+        v1.open()
+        v1.setState({
+            showProgress = false,
+            resetProgress = true,
+            instruction = v41
+        })
+        v14.activate(v39, v40, v43)
+    elseif v38 == "finish" then
+        v9 = nil
+        v10 = nil
+        v14.isCooking = false
+        v1.close()
+        v14.getModule("CookProgress").cancel()
+        v14.getModule("Animations").stopAll(LocalPlayer.Character)
+        v2.enable()
+        if v11 then
+            Waypoints.destroy(v11)
+            local v44 = v14.getModule("ProximityPrompts").get(v12, v11)
+            if v44 then
+                v44:Destroy()
+            end
+        end
+        for v45, v46 in pairs(script.InputDetectors:GetChildren()) do
+            local v47 = require(v46)
+            if v47 and v47.cancel then
+                v47.cancel()
+            end
+        end
+        for v48, v49 in pairs(script.Components:GetChildren()) do
+            local v50 = require(v49)
+            if v50 and v50.clear then
+                v50.clear()
+            end
+        end
+    elseif v38 == "finishFromClient" then
+        game.ReplicatedStorage.Events.NewCookingRemote:FireServer("finishFromClient")
+    elseif v38 == "queueState" then
+        v1.setQueueState(v39)
+    end
+end
+
+function v14.setFasterCookingEnabled() -- line 265 | captures: v13, v6
+    v13 = true
+    for v51, v52 in v6 do
+        if v52.setFasterCookingEnabled then
+            v52.setFasterCookingEnabled()
+        end
+    end
+end
+
+function v14.isFasterCookingEnabled() -- line 274 | captures: v13
+    return v13
+end
+
+function v14.init() -- line 278 | captures: v1, v3, v4, LocalPlayer, v6, v14
+    for v53, v54 in pairs(script.Components:GetChildren()) do
+        v6[v54.Name] = require(v54)
+    end
+    for v55, v56 in pairs(script.WorkerComponents:GetChildren()) do
+        v6[v56.Name] = require(v56)
+    end
+    for v57, v58 in pairs(script.InputDetectors:GetChildren()) do
+        v6[v58.Name] = require(v58)
+    end
+    for v59, v60 in pairs(script:GetChildren()) do
+        if v60:IsA("ModuleScript") then
+            v6[v60.Name] = require(v60)
+        end
+    end
+    for v61, v62 in pairs(script.Effects:GetChildren()) do
+        local v63 = require(v62)
+        if v63.init then
+            v63.init()
+        end
+        v6[v62.Name] = v63
+    end
+    v4 = require(LocalPlayer.PlayerScripts.GuiMain.Main.Workers.InspectWorker)
+    v3 = require(game.ReplicatedStorage.ClientModules.FoodTrucksClient)
+    v1 = v14.getModule("CookingUI")
+    game.ReplicatedStorage.Events.NewCookingRemote.OnClientEvent:connect(function(...) -- line 306 | captures: v14
+        v14.handleRequest(...)
+    end)
+end
+
+return v14

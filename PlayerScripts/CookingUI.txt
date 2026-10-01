@@ -1,0 +1,169 @@
+-- https://sitetest1.lua.expert
+
+local v1 = {}
+local LocalPlayer = game.Players.LocalPlayer
+local Frame = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("CookingGui").Frame
+local NewFrame = Frame.NewFrame
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
+local TweenService = game:GetService("TweenService")
+local MonetisationController = require(StarterPlayer.StarterPlayerScripts.Controllers.MonetisationController)
+local Food = require(game.ReplicatedStorage.DataModules.Food)
+local Parent = require(script.Parent)
+local Instructions = require(game.ReplicatedStorage.DataModules.Food.Instructions)
+local BrandFoods = require(ReplicatedStorage.DataModules.Brand.BrandFoods)
+local setFoodImage = require(ReplicatedStorage.Functions.Food.setFoodImage)
+local getFoodName = require(ReplicatedStorage.Functions.Food.getFoodName)
+local canViewBrandedContent = require(ReplicatedStorage.Functions.Brand.canViewBrandedContent)
+local DarkenOnEnterTogglable = require(ReplicatedStorage.GuiModules.DarkenOnEnter.DarkenOnEnterTogglable)
+local v2 = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local v3 = false
+local v4
+
+function v1.setSkipButtonEnabled(v5) -- line 25 | captures: v4, NewFrame, MonetisationController, DarkenOnEnterTogglable
+    NewFrame.SkipButton.Visible = v5
+    local v6
+    if v5 then
+        DarkenOnEnterTogglable.add(NewFrame.SkipButton)
+        v6 = v4
+    else
+        DarkenOnEnterTogglable.remove(NewFrame.SkipButton)
+    end
+    if not (v5 and v6 or not v5) then
+        v4 = NewFrame.SkipButton.MouseButton1Click:Connect(function() -- line 32 | captures: MonetisationController
+            MonetisationController.promptPurchase("FasterCooking")
+        end)
+    end
+end
+
+function v1.setState(v7) -- line 41 | captures: v1, NewFrame, TweenService, Instructions, v2
+    if v7.instruction then
+        local instruction = v7.instruction
+        if typeof(instruction) == "string" then
+            NewFrame.ImageLabel.Visible = false
+            NewFrame.Instruction.Text = v7.instruction
+        else
+            local v8 = Instructions.getPlatformTab(v7.instruction)
+            if v8 then
+                if v8.Text then
+                    NewFrame.Instruction.Text = v8.Text
+                elseif v8.GetText then
+                    NewFrame.Instruction.Text = v8.GetText()
+                end
+                local v9, v10, v11, v12 = Instructions.getIcon(v8)
+                if v9 and v10 and v11 then
+                    NewFrame.ImageLabel.Visible = true
+                    NewFrame.ImageLabel.Image = v9
+                    NewFrame.ImageLabel.ImageRectOffset = v10
+                    NewFrame.ImageLabel.ImageRectSize = v11
+                    NewFrame.ImageLabel.ImageColor3 = v12 or Color3.fromRGB(255, 255, 255)
+                else
+                    NewFrame.ImageLabel.Visible = false
+                end
+            end
+        end
+    end
+    v1.setSkipButtonEnabled(not NewFrame.ImageLabel.Visible)
+    if v7.progress then
+        TweenService:Create(NewFrame.ProgressBar.InnerBar, v2, { Size = UDim2.new(v7.progress, 0, 1, 0) }):Play()
+    end
+    if v7.resetProgress == true then
+        NewFrame.ProgressBar.InnerBar.Size = UDim2.new(0, 0, 1, 0)
+        spawn(function() -- line 79 | captures: NewFrame
+            NewFrame.ProgressBar.InnerBar.Visible = false
+            wait()
+            NewFrame.ProgressBar.InnerBar.Visible = true
+        end)
+    end
+    if not (v7.showProgress ~= nil and v7.showProgress == true) then
+        if v7.showProgress ~= nil and v7.showProgress == false then
+            NewFrame.ProgressBar.Visible = false
+        end
+    else
+        NewFrame.ProgressBar.Visible = true
+    end
+end
+
+function v1.updateAdIndicator(v13, v14, v15) -- line 92 | captures: LocalPlayer, ReplicatedStorage, BrandFoods, canViewBrandedContent
+    local AdIndicator = v14:FindFirstChild("AdIndicator")
+    local foodId = v13.foodId
+    if not (BrandFoods[tonumber(foodId)] and canViewBrandedContent(LocalPlayer)) then
+        if AdIndicator then
+            AdIndicator:Destroy()
+        end
+    elseif not AdIndicator then
+        local v16 = ReplicatedStorage.Resources.UI.FoodList.AdIndicator:Clone()
+        if v15 then
+            v16.Position = UDim2.fromScale(0.02, 0.7)
+            v16.Size = UDim2.fromScale(0.4, 0.4)
+        else
+            v16.Position = UDim2.fromScale(0.02, 0.95)
+            v16.Size = UDim2.fromScale(0.4, 0.2)
+        end
+        v16.Parent = v14
+    end
+end
+
+function v1.setup(v17) -- line 118 | captures: v1, LocalPlayer, NewFrame, setFoodImage, getFoodName
+    setFoodImage(NewFrame.FoodImage, v17.foodId, true)
+    NewFrame.Header.TextLabel.Text = "Recipe: " .. getFoodName(v17.foodId, LocalPlayer)
+    NewFrame.Instruction.Text = ""
+    NewFrame.ProgressBar.Visible = false
+    v1.updateAdIndicator(v17, NewFrame, false)
+end
+
+function v1.close() -- line 127 | captures: v3, Frame, NewFrame, Parent
+    if not v3 then
+        return
+    end
+    Parent.showRegularUI(true)
+    v3 = false
+    NewFrame.Visible = false
+    Frame.Visible = false
+end
+
+function v1.open(v18) -- line 136 | captures: v3, v1, Frame, NewFrame, Parent
+    if v18 then
+        v1.setup(v18)
+    end
+    if v3 then
+        return
+    end
+    Parent.showRegularUI(false)
+    v3 = true
+    Frame.Visible = true
+    NewFrame.Visible = true
+end
+
+function v1.clearQueue() -- line 151 | captures: Frame
+    for v19, v20 in pairs(Frame:GetChildren()) do
+        if v20.Name == "QueueItem" then
+            v20:Destroy()
+        end
+    end
+end
+
+function v1.setQueueState(v21) -- line 159 | captures: v1, LocalPlayer, Frame, NewFrame, Food, setFoodImage, getFoodName
+    v1.clearQueue()
+    if v21 then
+        local v22 = 5
+        for v23, v24 in pairs(v21) do
+            local v25 = Frame.QueuedTemplate:Clone()
+            v25.LayoutOrder = v22
+            v25.Name = "QueueItem"
+            v25.QueuedText.Text = "Queued"
+            if Food[v24.id] then
+                local v26 = getFoodName(v24.id, LocalPlayer)
+                local FoodImage = v25.FoodImage
+                setFoodImage(FoodImage, v24.id, true)
+                v1.updateAdIndicator(v21, NewFrame, true)
+                v25.Recipe.Text = v26
+                v25.Visible = true
+                v25.Parent = Frame
+                v22 += 1
+            end
+        end
+    end
+end
+
+return v1
